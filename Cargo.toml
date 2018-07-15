@@ -2,6 +2,14 @@
 name = "rax"
 version = "0.1.0"
 authors = ["Clay Molocznik <clay@mojo.run>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/run-mojo/rax"
+homepage = "https://github.com/run-mojo/rax"
+documentation = "https://docs.rs/rax"
+description = """
+Rust wrapper for the ANSI C Radix Tree "rax" implementation used in Redis
+"""
 build = "build.rs"
 
 [lib]
