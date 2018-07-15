@@ -8,7 +8,7 @@ repository = "https://github.com/run-mojo/rax"
 homepage = "https://github.com/run-mojo/rax"
 documentation = "https://docs.rs/rax"
 description = """
-Rust wrapper for the ANSI C Radix Tree "rax" implementation used in Redis
+Rust wrapper for the ANSI C Radix Tree "rax" https://github.com/antirez/rax implementation used in Redis
 """
 build = "build.rs"
 
@@ -19,7 +19,6 @@ crate-type = ["dylib", "rlib"]
 [dependencies]
 libc = "0.2"
 num = "*"
-stopwatch = "0.0.7"
 
 [dev-dependencies]
 bencher = "0.1.5"
