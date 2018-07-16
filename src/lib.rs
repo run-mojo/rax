@@ -26,6 +26,26 @@ pub const RAX_ITER_JUST_SEEKED: libc::c_int = (1 << 0);
 pub const RAX_ITER_EOF: libc::c_int = (1 << 1);
 pub const RAX_ITER_SAFE: libc::c_int = (1 << 2);
 
+/// Return the existing Rax allocator.
+pub unsafe fn allocator() -> (
+    extern "C" fn(size: libc::size_t) -> *mut u8,
+    extern "C" fn(ptr: *mut libc::c_void, size: libc::size_t) -> *mut u8,
+    extern "C" fn(ptr: *mut libc::c_void)) {
+    (rax_malloc, rax_realloc, rax_free)
+}
+
+/// Rax internally makes calls to "malloc", "realloc" and "free" for all of it's
+/// heap memory needs. These calls can be patched with the supplied hooks.
+/// Do not call this method after Rax has been used at all. This must
+/// be called before using or calling any other Rax API function.
+pub unsafe fn set_allocator(
+    malloc: extern "C" fn(size: libc::size_t) -> *mut u8,
+    realloc: extern "C" fn(ptr: *mut libc::c_void, size: libc::size_t) -> *mut u8,
+    free: extern "C" fn(ptr: *mut libc::c_void)) {
+    rax_malloc = malloc;
+    rax_realloc = realloc;
+    rax_free = free;
+}
 
 #[derive(Debug)]
 pub enum RaxError {
@@ -38,7 +58,6 @@ impl RaxError {
         RaxError::Generic(GenericError::new(message))
     }
 }
-
 
 /// Redis has a beautiful Radix Tree implementation in ANSI C.
 /// This brings it to Rust and creates a safe Map like wrapper
@@ -1768,6 +1787,7 @@ type raxNodeCallback = extern "C" fn(v: *mut libc::c_void);
 
 type RaxFreeCallback = extern "C" fn(v: *mut libc::c_void);
 
+
 #[allow(improper_ctypes)]
 #[allow(non_snake_case)]
 #[allow(non_camel_case_types)]
@@ -1776,31 +1796,12 @@ extern "C" {
     #[no_mangle]
     pub static raxNotFound: *mut u8;
 
-    // '>'
     #[no_mangle]
-    pub static RAX_GREATER: *const u8;
-    // '>='
+    pub static mut rax_malloc: extern "C" fn(size: libc::size_t) -> *mut u8;
     #[no_mangle]
-    pub static RAX_GREATER_EQUAL: *const u8;
-    // '<'
+    pub static mut rax_realloc: extern "C" fn(ptr: *mut libc::c_void, size: libc::size_t) -> *mut u8;
     #[no_mangle]
-    pub static RAX_LESSER: *const u8;
-    // '<='
-    #[no_mangle]
-    pub static RAX_LESSER_EQUAL: *const u8;
-    // '='
-    #[no_mangle]
-    pub static RAX_EQUAL: *const u8;
-    // '^'
-    #[no_mangle]
-    pub static RAX_MIN: *const u8;
-    // '$'
-    #[no_mangle]
-    pub static RAX_MAX: *const u8;
-
-    fn raxIteratorFree(
-        it: *const raxIterator
-    );
+    pub static mut rax_free: extern "C" fn(ptr: *mut libc::c_void);
 
     fn raxIteratorSize() -> libc::c_int;
 
@@ -1904,7 +1905,29 @@ mod tests {
     use std;
     use std::default::Default;
     use std::fmt;
+//    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::time::{Duration, Instant};
+
+    extern "C" fn rax_malloc_hook(size: libc::size_t) -> *mut u8 {
+        unsafe {
+            println!("malloc");
+            libc::malloc(size) as *mut u8
+        }
+    }
+
+    extern "C" fn rax_realloc_hook(ptr: *mut libc::c_void, size: libc::size_t) -> *mut u8 {
+        unsafe {
+            println!("realloc");
+            libc::realloc(ptr, size) as *mut u8
+        }
+    }
+
+    extern "C" fn rax_free_hook(ptr: *mut libc::c_void) {
+        unsafe {
+            println!("free");
+            libc::free(ptr)
+        }
+    }
 
     pub struct MyMsg<'a>(&'a str);
 
@@ -2261,6 +2284,14 @@ mod tests {
 
     #[test]
     fn key_str() {
+        unsafe {
+            set_allocator(
+                rax_malloc_hook,
+                rax_realloc_hook,
+                rax_free_hook,
+            );
+        }
+
         let mut r = RaxMap::<&str, MyMsg>::new();
 
         let key = "hello-way";

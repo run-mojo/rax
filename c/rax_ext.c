@@ -11,13 +11,12 @@
 #include "rax_ext.h"
 #include "rax_malloc.h"
 
-char *RAX_GREATER = ">";
-char *RAX_GREATER_EQUAL = ">=";
-char *RAX_LESSER = "<";
-char *RAX_LESSER_EQUAL = "<=";
-char *RAX_EQUAL = "=";
-char *RAX_MIN = "^";
-char *RAX_MAX = "$";
+// init with libc malloc
+void* (*rax_malloc)(size_t) = malloc;
+// init with libc realloc
+void* (*rax_realloc)(void*,size_t) = realloc;
+// init with libc free
+void (*rax_free)(void*) = free;
 
 raxIterator *raxIteratorNew(rax *rt) {
     // Allocate on the heap.
@@ -25,10 +24,3 @@ raxIterator *raxIteratorNew(rax *rt) {
     raxStart(it, rt);
     return it;
 }
-
-void raxIteratorFree(raxIterator *it) {
-    //
-    rax_free(it);
-}
-
-#include "rax_ext.h"

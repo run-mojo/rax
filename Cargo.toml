@@ -1,6 +1,6 @@
 [package]
 name = "rax"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Clay Molocznik <clay@mojo.run>"]
 license = "MIT"
 readme = "README.md"
