@@ -1,6 +1,6 @@
 [package]
 name = "rax"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Clay Molocznik <clay@mojo.run>"]
 license = "MIT"
 readme = "README.md"
@@ -13,8 +13,12 @@ Rust wrapper for the ANSI C Radix Tree "rax" https://github.com/antirez/rax impl
 build = "build.rs"
 
 [lib]
-bench = false
+name = "rax"
 crate-type = ["dylib", "rlib"]
+
+[[bench]]
+name = "rax"
+path = "src/bench.rs"
 
 [dependencies]
 libc = "0.2"

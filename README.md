@@ -1,3 +1,133 @@
+# rax - Radix Tree
+
+The skinny on Radix trees are that it is comparable to hash maps but are also sorted like BTrees. This particular implementation implements some advanced features just as prefix compression which makes this structure much more memory efficient than hash maps and usually BTrees too.
+
+It significantly outperforms std::collections::HashMap / BTreeMap / HashSet / BTreeSet under heavy stress with many entries in common use cases. Mileage may vary so test it yourself and report back the results.
+
+Full specification can be found below the usage example.
+
+Check out another Redis engineering gem below:
+
+[listpack "Packed List Structure" used in Redis brought to Rust](https://github.com/run-mojo/listpack)
+
+## Usage
+
+```rust
+extern crate libc;
+extern crate rax;
+
+use libc;
+use rax;
+use rax::{RaxMap, RaxSet};
+
+fn main() {
+    // Optionally use different memory allocator
+    // Internally defaults to malloc in libc.
+    patch_allocator();
+    
+    let mut r = RaxMap::<&str, &str>::new();
+    
+    // Also have a "Set" version with no memory
+    // cost with storing value pointers.
+    //let mut set = RaxSet::<&str>::new();
+
+    // Values must be boxed since the internal Rax
+    // stores data pointers. However, keys are
+    // fully represented in a compressed format
+    // within the Rax so those can be stack allocated.
+    r.insert(
+        "romane",
+        Box::new(MyMsg("romane it!")),
+    ).expect("whoops!");
+    r.insert(
+        "romanus",
+        Box::new(MyMsg("romanus it!")),
+    ).expect("whoops!");
+
+    r.insert(
+        "romulus",
+        Box::new(MyMsg("romulus it!")),
+    ).expect("whoops!");
+    r.insert(
+        "rubens",
+        Box::new(MyMsg("rubens it!")),
+    ).expect("whoops!");
+    r.insert(
+        "ruber",
+        Box::new(MyMsg("ruber it!")),
+    ).expect("whoops!");
+    r.insert(
+        "rubicon",
+        Box::new(MyMsg("rubicon it!")),
+    ).expect("whoops!");
+    r.insert(
+        "rubicundus",
+        Box::new(MyMsg("rubicundus it!")),
+    ).expect("whoops!");
+
+    {
+        match r.get("rubens") {
+            Some(v) => println!("Found {}", v.0),
+            None => println!("Not Found")
+        }
+    }
+
+    // Full featured iterator / cursor with seek
+    // and going forwards or backwards.
+    r.iter(|_, iter| {
+        if !iter.seek_min() {
+            return;
+        }
+        while iter.forward() {
+            println!("{}", iter.key());
+        }
+        if !iter.seek_max() {
+            return;
+        }
+        while iter.back() {
+            println!("{}", iter.key());
+        }
+    });
+    
+    // Print the tree as ASCII art
+    r.show();
+}
+
+fn patch_allocator() {
+    // Can hook memory allocator to control the internal heap allocations.
+    // All memory is reclaimed when rax leaves scope automatically
+    // through the Drop trait.
+    unsafe {
+        rax::set_allocator(
+            rax_malloc_hook,
+            rax_realloc_hook,
+            rax_free_hook,
+        );
+    }
+}
+
+extern "C" fn rax_malloc_hook(size: libc::size_t) -> *mut u8 {
+    unsafe {
+        println!("malloc");
+        libc::malloc(size) as *mut u8
+    }
+}
+
+extern "C" fn rax_realloc_hook(ptr: *mut libc::c_void, size: libc::size_t) -> *mut u8 {
+    unsafe {
+        println!("realloc");
+        libc::realloc(ptr, size) as *mut u8
+    }
+}
+
+extern "C" fn rax_free_hook(ptr: *mut libc::c_void) {
+    unsafe {
+        println!("free");
+        libc::free(ptr)
+    }
+}
+```
+
 # Rax, an ANSI C radix tree implementation
 
 Rax is a radix tree implementation initially written to be used in a specific

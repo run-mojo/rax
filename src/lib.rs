@@ -2,6 +2,66 @@
 #![feature(lang_items)]
 #![feature(test)]
 
+///  Representation of a radix tree as implemented in this file, that contains
+///  the strings "foo", "foobar" and "footer" after the insertion of each
+///  word. When the node represents a key inside the radix tree, we write it
+///  between [], otherwise it is written between ().
+///
+///  This is the vanilla representation:
+///
+///               (f) ""
+///                 \
+///                 (o) "f"
+///                   \
+///                   (o) "fo"
+///                     \
+///                   [t   b] "foo"
+///                   /     \
+///          "foot" (e)     (a) "foob"
+///                 /         \
+///       "foote" (r)         (r) "fooba"
+///               /             \
+///     "footer" []             [] "foobar"
+///
+///  However, this implementation implements a very common optimization where
+///  successive nodes having a single child are "compressed" into the node
+///  itself as a string of characters, each representing a next-level child,
+///  and only the link to the node representing the last character node is
+///  provided inside the representation. So the above representation is turned
+///  into:
+///
+///                   ["foo"] ""
+///                      |
+///                   [t   b] "foo"
+///                   /     \
+///         "foot" ("er")    ("ar") "foob"
+///                  /          \
+///        "footer" []          [] "foobar"
+///
+///  However this optimization makes the implementation a bit more complex.
+///  For instance if a key "first" is added in the above radix tree, a
+///  "node splitting" operation is needed, since the "foo" prefix is no longer
+///  composed of nodes having a single child one after the other. This is the
+///  above tree and the resulting node splitting after this event happens:
+///
+///
+///                     (f) ""
+///                     /
+///                  (i o) "f"
+///                  /   \
+///     "firs"  ("rst")  (o) "fo"
+///               /        \
+///     "first" []       [t   b] "foo"
+///                      /     \
+///            "foot" ("er")    ("ar") "foob"
+///                     /          \
+///           "footer" []          [] "foobar"
+///
+///  Similarly after deletion, if a new chain of nodes having a single child
+///  is created (the chain must also not include nodes that represent keys),
+///  it must be compressed back into a single node.
+
+
 extern crate libc;
 extern crate nix;
 extern crate test;
@@ -1905,8 +1965,9 @@ mod tests {
     use std;
     use std::default::Default;
     use std::fmt;
-//    use std::sync::atomic::{AtomicUsize, Ordering};
+    //    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::time::{Duration, Instant};
+    use test::{Bencher};
 
     extern "C" fn rax_malloc_hook(size: libc::size_t) -> *mut u8 {
         unsafe {
@@ -2004,6 +2065,7 @@ mod tests {
             return (dur.as_secs() * 1000 + (dur.subsec_nanos() / 1000000) as u64) as i64;
         }
     }
+
 
     #[test]
     fn bench() {
