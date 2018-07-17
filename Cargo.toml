@@ -1,6 +1,6 @@
 [package]
 name = "rax"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Clay Molocznik <clay@mojo.run>"]
 license = "MIT"
 readme = "README.md"
@@ -18,7 +18,7 @@ crate-type = ["dylib", "rlib"]
 
 [[bench]]
 name = "rax"
-path = "src/bench.rs"
+path = "benches/bench.rs"
 
 [dependencies]
 libc = "0.2"
