@@ -37,31 +37,31 @@ fn main() {
     // within the Rax so those can be stack allocated.
     r.insert(
         "romane",
-        Box::new(MyMsg("romane it!")),
+        Box::new("romane it!"),
     ).expect("whoops!");
     r.insert(
         "romanus",
-        Box::new(MyMsg("romanus it!")),
+        Box::new("romanus it!"),
     ).expect("whoops!");
     r.insert(
         "romulus",
-        Box::new(MyMsg("romulus it!")),
+        Box::new("romulus it!"),
     ).expect("whoops!");
     r.insert(
         "rubens",
-        Box::new(MyMsg("rubens it!")),
+        Box::new("rubens it!"),
     ).expect("whoops!");
     r.insert(
         "ruber",
-        Box::new(MyMsg("ruber it!")),
+        Box::new("ruber it!"),
     ).expect("whoops!");
     r.insert(
         "rubicon",
-        Box::new(MyMsg("rubicon it!")),
+        Box::new("rubicon it!"),
     ).expect("whoops!");
     r.insert(
         "rubicundus",
-        Box::new(MyMsg("rubicundus it!")),
+        Box::new("rubicundus it!"),
     ).expect("whoops!");
 
     match r.get("rubens") {
