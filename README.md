@@ -43,7 +43,6 @@ fn main() {
         "romanus",
         Box::new(MyMsg("romanus it!")),
     ).expect("whoops!");
-
     r.insert(
         "romulus",
         Box::new(MyMsg("romulus it!")),
@@ -65,11 +64,9 @@ fn main() {
         Box::new(MyMsg("rubicundus it!")),
     ).expect("whoops!");
 
-    {
-        match r.get("rubens") {
-            Some(v) => println!("Found {}", v.0),
-            None => println!("Not Found")
-        }
+    match r.get("rubens") {
+        Some(v) => println!("Found {}", v),
+        None => println!("Not Found")
     }
 
     // Full featured iterator / cursor with seek
